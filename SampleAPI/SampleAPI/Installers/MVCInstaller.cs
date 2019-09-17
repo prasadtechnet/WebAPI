@@ -22,6 +22,17 @@ namespace SampleAPI.Installers
 
             services.AddSingleton(jwtSettings);
 
+            var tokenValidationParams = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.ASCII.GetBytes(jwtSettings.Secret)),
+                ValidateAudience = false,
+                ValidateIssuer = false,
+                RequireExpirationTime = false,
+                ValidateLifetime = true
+
+            }; ;
+            services.AddSingleton(tokenValidationParams);
             services.AddAuthentication(x =>
             {
                 x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -31,18 +42,12 @@ namespace SampleAPI.Installers
             })
             .AddJwtBearer(cog => {
                 cog.SaveToken = true;
-                cog.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.ASCII.GetBytes(jwtSettings.Secret)),
-                    ValidateAudience = false,
-                    ValidateIssuer = false,
-                    RequireExpirationTime = false,
-                    ValidateLifetime = true
-
-                };
+                cog.TokenValidationParameters = tokenValidationParams;
             });
 
+            services.AddAuthorization(options => {
+                options.AddPolicy("TagViewer", builder => builder.RequireClaim("tags.view","true"));
+            });
 
             //MVC
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);

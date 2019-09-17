@@ -10,7 +10,9 @@ using Microsoft.IdentityModel.Tokens;
 using SampleAPI.Contracts.v1;
 using SampleAPI.Contracts.v1.Requests;
 using SampleAPI.Contracts.v1.Responses;
+using SampleAPI.Data;
 using SampleAPI.Options;
+using SampleAPI.Services;
 
 namespace SampleAPI.Controllers.v1
 {
@@ -18,10 +20,11 @@ namespace SampleAPI.Controllers.v1
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private JwtSettings _jwtSettings;
+        private JwtTokenManager _jwtManager;
+ 
         public AuthController(JwtSettings jwtSettings)
         {
-            _jwtSettings = jwtSettings;
+            _jwtManager = new JwtTokenManager(jwtSettings);          
         }
 
         [HttpPost(APIRoutes.Auth.Login)]
@@ -46,26 +49,7 @@ namespace SampleAPI.Controllers.v1
                     {
                         if (authLogin.Password =="p123")
                         {
-                            var jwtTokenHndlr = new JwtSecurityTokenHandler();
-
-                            var secretKey = System.Text.Encoding.ASCII.GetBytes(_jwtSettings.Secret);
-                            var tokenDesc = new SecurityTokenDescriptor {
-                                Subject = new System.Security.Claims.ClaimsIdentity(new [] 
-                                {
-                                    new Claim(JwtRegisteredClaimNames.Sub, authLogin.Email),
-                                    new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
-                                    new Claim(JwtRegisteredClaimNames.Email, authLogin.Email)
-
-                                }),
-                                Expires=DateTime.UtcNow.AddHours(2),
-                                SigningCredentials=new SigningCredentials(new SymmetricSecurityKey(secretKey),SecurityAlgorithms.HmacSha256Signature)
-                            };
-                            var token = jwtTokenHndlr.CreateToken(tokenDesc);
-
-                            return new AuthReponse {
-                                Success = true,
-                                Token = jwtTokenHndlr.WriteToken(token)
-                            };
+                            objResp= _jwtManager.GenerateToken(authLogin.Email, "Admin");
                         }
                         else
                             objResp.Error = new ErrorResponse { Errors = new List<string> { "Invalid password" } };

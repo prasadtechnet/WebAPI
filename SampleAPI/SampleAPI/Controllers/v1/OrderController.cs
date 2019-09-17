@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SampleAPI.Contracts.v1;
+using SampleAPI.Extensions;
 
 namespace SampleAPI.Controllers.v1
 {
@@ -21,17 +22,26 @@ namespace SampleAPI.Controllers.v1
         }
 
        [HttpGet(APIRoutes.Order.GetAll)]
+       [Authorize(Policy = "TagViewer")]
         public IActionResult GetAll()
         {
 
 
-            return Ok();
+            return Ok("Get all");
         }
         [HttpGet(APIRoutes.Order.Get)]
         public IActionResult GetById(string Id)
         {
 
-            return Ok("ok");
+            var getUserRole = HttpContext.GetUserRole();
+
+            if (getUserRole == "Admin")
+            {
+                return Ok("you have all permissions");
+            }
+
+
+            return Unauthorized("You dont have permission to access");
         }
     }
 }

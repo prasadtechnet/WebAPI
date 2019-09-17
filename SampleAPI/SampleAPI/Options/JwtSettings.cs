@@ -9,5 +9,6 @@ namespace SampleAPI.Options
     {
         public string Secret { get; set; }
 
+        public TimeSpan TokenLifetime { get; set; }
     }
 }
